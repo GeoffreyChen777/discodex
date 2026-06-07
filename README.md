@@ -79,6 +79,8 @@ At runtime `<channel-workspace>` is the channel-specific worktree path, for exam
 
 Auto-review is the "approve for me" behavior. It reviews boundary-crossing requests without granting full access. The Docker container and Codex `workspace-write` sandbox remain the security boundary. `danger-full-access` and `--yolo` are intentionally not supported by the config parser.
 
+For internal Codex deployments that use a custom provider policy, set `CODEX_APPROVALS_REVIEWER=guardian_subagent`.
+
 ## Per-channel workspaces
 
 Before creating a channel workspace, the bot ensures `/workspace-base` is a git repo. If it is empty, the bot runs `git init` and creates an initial README commit. If it contains files but is not a git repo, setup fails so existing content is not silently rewritten.
