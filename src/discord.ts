@@ -2,6 +2,7 @@ import type { Message } from "discord.js";
 
 export const DISCORD_MESSAGE_LIMIT = 2000;
 const SAFE_CHUNK_LIMIT = 1900;
+const TYPING_REFRESH_MS = 8_000;
 
 export type ParsedBotMessage =
   | { kind: "empty" }
@@ -98,6 +99,24 @@ export async function replySafely(message: Message, text: string): Promise<void>
       allowedMentions: { parse: [] },
     });
   }
+}
+
+export function startTyping(message: Message): () => void {
+  const channel = message.channel as unknown as { sendTyping?: () => Promise<unknown> };
+  if (typeof channel.sendTyping !== "function") {
+    return () => undefined;
+  }
+
+  const send = () => {
+    void channel.sendTyping?.().catch(() => {
+      // Typing indicators are best-effort; failing to send one should not fail a turn.
+    });
+  };
+
+  send();
+  const interval = setInterval(send, TYPING_REFRESH_MS);
+  interval.unref?.();
+  return () => clearInterval(interval);
 }
 
 function escapeRegExp(value: string): string {

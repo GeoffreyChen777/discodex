@@ -1,6 +1,6 @@
 import type { Message } from "discord.js";
 
-import { buildCodexPrompt, replySafely } from "./discord.js";
+import { buildCodexPrompt, replySafely, startTyping } from "./discord.js";
 import type { AppConfig } from "./config.js";
 import type { CodexDisplayEvent, CodexRunner } from "./codex.js";
 import type { StateStore } from "./state.js";
@@ -15,6 +15,7 @@ type ChannelWork = {
   active: ReturnType<CodexRunner["start"]> | null;
   activeMessageId: string | null;
   starting: boolean;
+  stopTyping: (() => void) | null;
   queue: Job[];
 };
 
@@ -125,6 +126,7 @@ export class BotController {
 
   private async startJob(channelId: string, job: Job): Promise<void> {
     const work = this.workFor(channelId);
+    work.stopTyping = startTyping(job.message);
     try {
       const workspace = await this.workspaces.ensureChannelWorkspace(channelId);
       const session = this.state.getChannelSession(channelId);
@@ -152,11 +154,13 @@ export class BotController {
           if (current.active === run) {
             current.active = null;
             current.activeMessageId = null;
+            this.stopTyping(current);
           }
           this.processNext(channelId);
         });
     } catch (error) {
       work.starting = false;
+      this.stopTyping(work);
       await replySafely(job.message, `Workspace setup failed: ${error instanceof Error ? error.message : String(error)}`);
       this.processNext(channelId);
     }
@@ -183,10 +187,15 @@ export class BotController {
   private workFor(channelId: string): ChannelWork {
     let work = this.channels.get(channelId);
     if (!work) {
-      work = { active: null, activeMessageId: null, starting: false, queue: [] };
+      work = { active: null, activeMessageId: null, starting: false, stopTyping: null, queue: [] };
       this.channels.set(channelId, work);
     }
     return work;
+  }
+
+  private stopTyping(work: ChannelWork): void {
+    work.stopTyping?.();
+    work.stopTyping = null;
   }
 
   private stopAndClearWork(work: ChannelWork): void {
@@ -196,6 +205,7 @@ export class BotController {
     work.active = null;
     work.activeMessageId = null;
     work.starting = false;
+    this.stopTyping(work);
     work.queue = [];
   }
 }

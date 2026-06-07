@@ -104,6 +104,7 @@ describe("BotController", () => {
     expect(codex.starts).toHaveLength(1);
     expect(controller.getChannelStatus("channel")).toEqual({ running: true, queued: 1 });
     expect(message.reply).not.toHaveBeenCalled();
+    expect(message.channel.sendTyping).toHaveBeenCalled();
 
     codex.finish(0, { threadId: "thread-a" });
     await flushPromises();
@@ -144,6 +145,28 @@ describe("BotController", () => {
 
     expect(message.reply).toHaveBeenCalledTimes(1);
     expect(message.reply).toHaveBeenCalledWith(expect.objectContaining({ content: "hello" }));
+  });
+
+  it("stops typing when a turn finishes", async () => {
+    vi.useFakeTimers();
+    const state = new FakeState();
+    const codex = new FakeCodex();
+    const workspaces = new FakeWorkspaces();
+    const controller = new BotController(config, state as never, codex as never, workspaces as never);
+    const message = fakeMessage();
+
+    await controller.enqueue(message, "first");
+    expect(message.channel.sendTyping).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(8_000);
+    expect(message.channel.sendTyping).toHaveBeenCalledTimes(2);
+
+    codex.finish(0, { threadId: "thread-a" });
+    await flushMicrotasks();
+    vi.advanceTimersByTime(8_000);
+
+    expect(message.channel.sendTyping).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
   });
 
   it("cancels and resets channel work", async () => {
@@ -187,10 +210,21 @@ function fakeMessage() {
       username: "alice",
       globalName: "Alice",
     },
+    channel: {
+      sendTyping: vi.fn(async () => undefined),
+    },
     reply: vi.fn(async () => undefined),
-  } as unknown as Message & { reply: ReturnType<typeof vi.fn> };
+  } as unknown as Message & {
+    channel: { sendTyping: ReturnType<typeof vi.fn> };
+    reply: ReturnType<typeof vi.fn>;
+  };
 }
 
 async function flushPromises() {
   await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+async function flushMicrotasks() {
+  await Promise.resolve();
+  await Promise.resolve();
 }
