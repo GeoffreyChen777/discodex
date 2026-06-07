@@ -103,6 +103,7 @@ describe("BotController", () => {
 
     expect(codex.starts).toHaveLength(1);
     expect(controller.getChannelStatus("channel")).toEqual({ running: true, queued: 1 });
+    expect(message.reply).not.toHaveBeenCalled();
 
     codex.finish(0, { threadId: "thread-a" });
     await flushPromises();
@@ -126,7 +127,23 @@ describe("BotController", () => {
     await controller.enqueue(message, "fourth");
 
     expect(codex.starts).toHaveLength(1);
+    expect(message.reply).toHaveBeenCalledTimes(1);
     expect(message.reply).toHaveBeenCalledWith(expect.objectContaining({ content: expect.stringContaining("Queue is full") }));
+  });
+
+  it("does not forward progress events to Discord", async () => {
+    const state = new FakeState();
+    const codex = new FakeCodex();
+    const workspaces = new FakeWorkspaces();
+    const controller = new BotController(config, state as never, codex as never, workspaces as never);
+    const message = fakeMessage();
+
+    await controller.enqueue(message, "first");
+    await codex.starts[0]?.onEvent({ type: "progress", text: "Running command" });
+    await codex.starts[0]?.onEvent({ type: "agent_message", text: "hello" });
+
+    expect(message.reply).toHaveBeenCalledTimes(1);
+    expect(message.reply).toHaveBeenCalledWith(expect.objectContaining({ content: "hello" }));
   });
 
   it("cancels and resets channel work", async () => {

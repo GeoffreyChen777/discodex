@@ -23,10 +23,10 @@ describe("codex helpers", () => {
   });
 
   it("maps thread and agent message events", () => {
-    expect(displayEventsFromCodex({ type: "thread.started", thread_id: "abc" })).toContainEqual({
+    expect(displayEventsFromCodex({ type: "thread.started", thread_id: "abc" })).toEqual([{
       type: "thread",
       threadId: "abc",
-    });
+    }]);
     expect(
       displayEventsFromCodex({
         type: "item.completed",

@@ -35,7 +35,6 @@ export class BotController {
       return;
     }
     work.queue.push({ message, prompt });
-    await replySafely(message, work.active ? `Queued. Position: ${work.queue.length}.` : "Accepted. Starting Codex.");
     this.processNext(message.channelId);
   }
 
@@ -172,7 +171,6 @@ export class BotController {
       return;
     }
     if (event.type === "progress") {
-      await replySafely(message, event.text);
       return;
     }
     if (event.type === "error") {

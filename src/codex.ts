@@ -96,11 +96,9 @@ export class CodexRunner {
         }
       });
 
-      stderr.on("line", (line) => {
-        const trimmed = line.trim();
-        if (trimmed) {
-          void input.onEvent({ type: "progress", text: `Codex: ${trimmed}` });
-        }
+      stderr.on("line", () => {
+        // Keep Discord output focused on agent responses. Codex writes routine
+        // non-interactive status messages to stderr.
       });
 
       child.once("error", (error) => {
@@ -176,7 +174,6 @@ export function displayEventsFromCodex(event: CodexJsonEvent): CodexDisplayEvent
   const events: CodexDisplayEvent[] = [];
   if (event.type === "thread.started" && typeof event.thread_id === "string") {
     events.push({ type: "thread", threadId: event.thread_id });
-    events.push({ type: "progress", text: `Codex thread started: ${event.thread_id}` });
   }
 
   if (event.type === "turn.failed" || event.type === "error") {
