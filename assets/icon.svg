@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">discodex icon</title>
+  <desc id="desc">A Discord-style chat bubble connected to a terminal prompt.</desc>
+  <defs>
+    <linearGradient id="bg" x1="18" y1="18" x2="142" y2="142" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5865F2"/>
+      <stop offset="1" stop-color="#10A37F"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="32" fill="#111827"/>
+  <rect x="14" y="14" width="132" height="132" rx="26" fill="url(#bg)"/>
+  <path d="M42 45h76c8.8 0 16 7.2 16 16v40c0 8.8-7.2 16-16 16H76l-26 18v-18h-8c-8.8 0-16-7.2-16-16V61c0-8.8 7.2-16 16-16z" fill="#F9FAFB"/>
+  <path d="M52 77l18 14-18 14" fill="none" stroke="#111827" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M82 105h30" fill="none" stroke="#111827" stroke-width="9" stroke-linecap="round"/>
+</svg>

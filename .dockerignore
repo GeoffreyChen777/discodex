@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+data
+.env
+.codex-home
+.git
+.DS_Store
+npm-debug.log*

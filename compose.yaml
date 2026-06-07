@@ -1,0 +1,18 @@
+services:
+  discodex:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - discodex-state:/app/data
+      - codex-home:/codex-home
+      - discodex-workspaces:/workspaces
+      - ${CODEX_WORKSPACE_HOST_PATH:-discodex-base-workspace}:/workspace-base
+    restart: unless-stopped
+
+volumes:
+  discodex-state:
+  codex-home:
+  discodex-workspaces:
+  discodex-base-workspace:

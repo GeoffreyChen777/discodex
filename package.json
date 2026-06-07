@@ -1,0 +1,27 @@
+{
+  "name": "discodex",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "node --experimental-sqlite --import tsx src/index.ts",
+    "start": "node --experimental-sqlite dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@openai/codex": "^0.137.0",
+    "discord.js": "^14.26.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}
