@@ -12,9 +12,14 @@ const state = new StateStore(config.stateDbPath);
 const codex = new CodexRunner(config);
 const workspaces = new WorkspaceManager(config, state);
 const controller = new BotController(config, state, codex, workspaces);
+const intents = [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages];
+
+if (config.discordHistoryLimit > 0) {
+  intents.push(GatewayIntentBits.MessageContent);
+}
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+  intents,
 });
 
 client.once(Events.ClientReady, (readyClient) => {

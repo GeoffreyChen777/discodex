@@ -105,6 +105,8 @@ const baseConfig: AppConfig = {
   discordToken: "token",
   discordGuildId: "guild",
   allowedChannelIds: null,
+  discordHistoryLimit: 0,
+  discordHistoryMaxChars: 8000,
   codexBaseWorkdir: "/workspace-base",
   codexWorkspacesDir: "/workspaces",
   codexSandbox: "workspace-write",

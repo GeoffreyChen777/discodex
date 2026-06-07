@@ -26,7 +26,7 @@ Minimal Discord-to-Codex bridge. Mention the bot in an allowed Discord channel a
 
 1. Create a Discord application and bot in the Discord Developer Portal.
 2. Invite it to your server with permissions: View Channel, Send Messages, Read Message History.
-3. This bot only reacts to direct mentions, so Message Content privileged intent is not required for the v1 flow.
+3. If `DISCORD_HISTORY_LIMIT` is greater than `0`, enable Message Content Intent in the Bot settings page. Direct mention handling can run without it, but readable channel history needs it.
 
 ## Configure
 
@@ -39,6 +39,8 @@ Set:
 - `DISCORD_TOKEN`
 - `DISCORD_GUILD_ID`
 - `ALLOWED_CHANNEL_IDS` if you want to restrict channels
+- `DISCORD_HISTORY_LIMIT` to include recent channel messages before each Codex prompt, or `0` to disable
+- `DISCORD_HISTORY_MAX_CHARS` to cap how much history text is sent to Codex
 - Optional `CODEX_WORKSPACE_HOST_PATH` to a host git repo path mounted at `/workspace-base`
 - If `CODEX_WORKSPACE_HOST_PATH` is unset, Compose uses an internal Docker volume and the bot initializes it as an empty git repo on first use
 
@@ -66,6 +68,12 @@ Use Discord:
 - `@bot reset`
 - `@bot reset-workspace`
 - `@bot delete-workspace`
+
+## Discord history context
+
+Set `DISCORD_HISTORY_LIMIT` to a small number such as `20` to include recent messages from the same Discord channel before the current mention. The bot fetches messages before the triggering message, sorts them oldest to newest, redacts common token shapes, and adds them to the Codex prompt. `DISCORD_HISTORY_MAX_CHARS` caps the total history text so a busy channel does not produce oversized prompts.
+
+When history is enabled, the bot requests Discord's Message Content gateway intent. You must also enable Message Content Intent in the Discord Developer Portal for the application.
 
 ## Codex execution policy
 

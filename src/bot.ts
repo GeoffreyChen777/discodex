@@ -1,6 +1,6 @@
 import type { Message } from "discord.js";
 
-import { buildCodexPrompt, replySafely, startTyping } from "./discord.js";
+import { buildCodexPrompt, fetchDiscordHistory, replySafely, startTyping } from "./discord.js";
 import type { AppConfig } from "./config.js";
 import type { CodexDisplayEvent, CodexRunner } from "./codex.js";
 import type { StateStore } from "./state.js";
@@ -41,13 +41,7 @@ export class BotController {
 
   async reset(message: Message): Promise<void> {
     const work = this.workFor(message.channelId);
-    if (work.active) {
-      work.active.cancel();
-    }
-    work.active = null;
-    work.activeMessageId = null;
-    work.starting = false;
-    work.queue = [];
+    this.stopAndClearWork(work);
     this.state.clearChannelThread(message.channelId);
     await replySafely(message, "Channel Codex session reset.");
   }
@@ -59,6 +53,7 @@ export class BotController {
       return;
     }
     work.active.cancel();
+    this.stopTyping(work);
     await replySafely(message, "Cancel requested for the active Codex turn.");
   }
 
@@ -130,8 +125,13 @@ export class BotController {
     try {
       const workspace = await this.workspaces.ensureChannelWorkspace(channelId);
       const session = this.state.getChannelSession(channelId);
+      const history = await fetchDiscordHistory(
+        job.message,
+        this.config.discordHistoryLimit,
+        this.config.discordHistoryMaxChars,
+      );
       const run = this.codex.start({
-        prompt: buildCodexPrompt(job.message, job.prompt),
+        prompt: buildCodexPrompt(job.message, job.prompt, history),
         threadId: session?.threadId ?? null,
         workspacePath: workspace.workspacePath,
         onEvent: async (event) => this.handleCodexEvent(job.message, event),

@@ -9,6 +9,8 @@ const config: AppConfig = {
   discordToken: "token",
   discordGuildId: "guild",
   allowedChannelIds: null,
+  discordHistoryLimit: 0,
+  discordHistoryMaxChars: 8000,
   codexBaseWorkdir: "/workspace-base",
   codexWorkspacesDir: "/workspaces",
   codexSandbox: "workspace-write",
@@ -100,6 +102,7 @@ describe("BotController", () => {
 
     await controller.enqueue(message, "first");
     await controller.enqueue(message, "second");
+    await flushMicrotasks();
 
     expect(codex.starts).toHaveLength(1);
     expect(controller.getChannelStatus("channel")).toEqual({ running: true, queued: 1 });
@@ -107,12 +110,15 @@ describe("BotController", () => {
     expect(message.channel.sendTyping).toHaveBeenCalled();
 
     codex.finish(0, { threadId: "thread-a" });
-    await flushPromises();
+    await flushMicrotasks();
 
     expect(state.sessions.get("channel")?.threadId).toBe("thread-a");
     expect(codex.starts).toHaveLength(2);
     expect(codex.starts[1]?.threadId).toBe("thread-a");
     expect(codex.starts[1]?.workspacePath).toBe("/workspaces/channel-channel");
+
+    codex.finish(1, { threadId: "thread-a" });
+    await flushMicrotasks();
   });
 
   it("rejects jobs over the queue limit", async () => {
@@ -126,6 +132,7 @@ describe("BotController", () => {
     await controller.enqueue(message, "second");
     await controller.enqueue(message, "third");
     await controller.enqueue(message, "fourth");
+    await flushMicrotasks();
 
     expect(codex.starts).toHaveLength(1);
     expect(message.reply).toHaveBeenCalledTimes(1);
@@ -140,11 +147,37 @@ describe("BotController", () => {
     const message = fakeMessage();
 
     await controller.enqueue(message, "first");
+    await flushMicrotasks();
     await codex.starts[0]?.onEvent({ type: "progress", text: "Running command" });
     await codex.starts[0]?.onEvent({ type: "agent_message", text: "hello" });
 
     expect(message.reply).toHaveBeenCalledTimes(1);
     expect(message.reply).toHaveBeenCalledWith(expect.objectContaining({ content: "hello" }));
+  });
+
+  it("adds recent Discord history to the Codex prompt", async () => {
+    const state = new FakeState();
+    const codex = new FakeCodex();
+    const workspaces = new FakeWorkspaces();
+    const controller = new BotController(
+      { ...config, discordHistoryLimit: 2 },
+      state as never,
+      codex as never,
+      workspaces as never,
+    );
+    const message = fakeMessage([
+      fakeHistoryMessage("older", "Bob", "before that", 1),
+      fakeHistoryMessage("newer", "Alice", "please remember this", 2),
+    ]);
+
+    await controller.enqueue(message, "use the context");
+    await flushMicrotasks();
+
+    expect(message.channel.messages.fetch).toHaveBeenCalledWith({ limit: 2, before: "message" });
+    expect(codex.starts[0]?.prompt).toContain("Recent Discord channel history before this request");
+    expect(codex.starts[0]?.prompt).toContain("Bob (user-older): before that");
+    expect(codex.starts[0]?.prompt).toContain("Alice (user-newer): please remember this");
+    expect(codex.starts[0]?.prompt).toContain("Current user request:\nuse the context");
   });
 
   it("stops typing when a turn finishes", async () => {
@@ -156,6 +189,7 @@ describe("BotController", () => {
     const message = fakeMessage();
 
     await controller.enqueue(message, "first");
+    await flushMicrotasks();
     expect(message.channel.sendTyping).toHaveBeenCalledTimes(1);
 
     vi.advanceTimersByTime(8_000);
@@ -178,6 +212,7 @@ describe("BotController", () => {
     const message = fakeMessage();
 
     await controller.enqueue(message, "first");
+    await flushMicrotasks();
     await controller.cancel(message);
     expect(codex.cancels[0]).toHaveBeenCalledTimes(1);
 
@@ -199,7 +234,7 @@ describe("BotController", () => {
   });
 });
 
-function fakeMessage() {
+function fakeMessage(history: Message[] = []) {
   return {
     id: "message",
     channelId: "channel",
@@ -212,19 +247,37 @@ function fakeMessage() {
     },
     channel: {
       sendTyping: vi.fn(async () => undefined),
+      messages: {
+        fetch: vi.fn(async () => new Map(history.map((message) => [message.id, message]))),
+      },
     },
     reply: vi.fn(async () => undefined),
   } as unknown as Message & {
-    channel: { sendTyping: ReturnType<typeof vi.fn> };
+    channel: {
+      sendTyping: ReturnType<typeof vi.fn>;
+      messages: { fetch: ReturnType<typeof vi.fn> };
+    };
     reply: ReturnType<typeof vi.fn>;
   };
 }
 
-async function flushPromises() {
-  await new Promise((resolve) => setTimeout(resolve, 0));
+function fakeHistoryMessage(id: string, name: string, content: string, timestamp: number) {
+  return {
+    id,
+    content,
+    createdTimestamp: timestamp,
+    attachments: new Map(),
+    author: {
+      id: `user-${id}`,
+      username: name.toLowerCase(),
+      globalName: name,
+      bot: false,
+    },
+  } as unknown as Message;
 }
 
 async function flushMicrotasks() {
-  await Promise.resolve();
-  await Promise.resolve();
+  for (let index = 0; index < 5; index += 1) {
+    await Promise.resolve();
+  }
 }

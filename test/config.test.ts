@@ -12,7 +12,21 @@ describe("config", () => {
     expect(config.codexBaseWorkdir).toBe("/workspace-base");
     expect(config.codexWorkspacesDir).toBe("/workspaces");
     expect(config.codexApprovalsReviewer).toBe("auto_review");
+    expect(config.discordHistoryLimit).toBe(0);
+    expect(config.discordHistoryMaxChars).toBe(8000);
     expect(config.queueLimit).toBe(10);
+  });
+
+  it("loads Discord history settings", () => {
+    const config = loadConfig({
+      DISCORD_TOKEN: "token",
+      DISCORD_GUILD_ID: "guild",
+      DISCORD_HISTORY_LIMIT: "20",
+      DISCORD_HISTORY_MAX_CHARS: "12000",
+    });
+
+    expect(config.discordHistoryLimit).toBe(20);
+    expect(config.discordHistoryMaxChars).toBe(12000);
   });
 
   it("rejects danger-full-access", () => {
