@@ -6,7 +6,7 @@ export type AppConfig = {
   codexWorkspacesDir: string;
   codexHome?: string;
   codexSandbox: "read-only" | "workspace-write";
-  codexApprovalsReviewer: "auto_review" | "guardian_subagent";
+  codexApprovalsReviewer: "auto_review";
   codexModel?: string;
   stateDbPath: string;
   queueLimit: number;
@@ -76,12 +76,12 @@ function parseSandbox(value: string | undefined): "read-only" | "workspace-write
   throw new Error("CODEX_SANDBOX must be read-only or workspace-write");
 }
 
-function parseApprovalsReviewer(value: string | undefined): "auto_review" | "guardian_subagent" {
+function parseApprovalsReviewer(value: string | undefined): "auto_review" {
   const reviewer = value?.trim() || "auto_review";
-  if (reviewer === "auto_review" || reviewer === "guardian_subagent") {
+  if (reviewer === "auto_review") {
     return reviewer;
   }
-  throw new Error("CODEX_APPROVALS_REVIEWER must be auto_review or guardian_subagent");
+  throw new Error("CODEX_APPROVALS_REVIEWER must be auto_review");
 }
 
 function parsePositiveInt(value: string | undefined, fallback: number, name: string): number {

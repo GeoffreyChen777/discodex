@@ -34,14 +34,4 @@ describe("config", () => {
       }),
     ).toThrow(/CODEX_APPROVALS_REVIEWER/);
   });
-
-  it("allows guardian_subagent approval reviewer", () => {
-    const config = loadConfig({
-      DISCORD_TOKEN: "token",
-      DISCORD_GUILD_ID: "guild",
-      CODEX_APPROVALS_REVIEWER: "guardian_subagent",
-    });
-
-    expect(config.codexApprovalsReviewer).toBe("guardian_subagent");
-  });
 });
