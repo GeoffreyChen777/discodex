@@ -14,6 +14,7 @@ describe("config", () => {
     expect(config.codexApprovalsReviewer).toBe("auto_review");
     expect(config.discordHistoryLimit).toBe(0);
     expect(config.discordHistoryMaxChars).toBe(8000);
+    expect(config.discordRequestMessageContentIntent).toBe(false);
     expect(config.queueLimit).toBe(10);
   });
 
@@ -23,10 +24,12 @@ describe("config", () => {
       DISCORD_GUILD_ID: "guild",
       DISCORD_HISTORY_LIMIT: "20",
       DISCORD_HISTORY_MAX_CHARS: "12000",
+      DISCORD_REQUEST_MESSAGE_CONTENT_INTENT: "true",
     });
 
     expect(config.discordHistoryLimit).toBe(20);
     expect(config.discordHistoryMaxChars).toBe(12000);
+    expect(config.discordRequestMessageContentIntent).toBe(true);
   });
 
   it("rejects danger-full-access", () => {

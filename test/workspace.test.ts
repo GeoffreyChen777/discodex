@@ -107,6 +107,7 @@ const baseConfig: AppConfig = {
   allowedChannelIds: null,
   discordHistoryLimit: 0,
   discordHistoryMaxChars: 8000,
+  discordRequestMessageContentIntent: false,
   codexBaseWorkdir: "/workspace-base",
   codexWorkspacesDir: "/workspaces",
   codexSandbox: "workspace-write",

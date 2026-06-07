@@ -14,7 +14,7 @@ const workspaces = new WorkspaceManager(config, state);
 const controller = new BotController(config, state, codex, workspaces);
 const intents = [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages];
 
-if (config.discordHistoryLimit > 0) {
+if (config.discordRequestMessageContentIntent) {
   intents.push(GatewayIntentBits.MessageContent);
 }
 

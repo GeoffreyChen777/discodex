@@ -4,6 +4,7 @@ export type AppConfig = {
   allowedChannelIds: Set<string> | null;
   discordHistoryLimit: number;
   discordHistoryMaxChars: number;
+  discordRequestMessageContentIntent: boolean;
   codexBaseWorkdir: string;
   codexWorkspacesDir: string;
   codexHome?: string;
@@ -33,6 +34,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     DEFAULT_DISCORD_HISTORY_MAX_CHARS,
     "DISCORD_HISTORY_MAX_CHARS",
   );
+  const discordRequestMessageContentIntent = parseBoolean(
+    env.DISCORD_REQUEST_MESSAGE_CONTENT_INTENT,
+    false,
+    "DISCORD_REQUEST_MESSAGE_CONTENT_INTENT",
+  );
   const codexBaseWorkdir = env.CODEX_BASE_WORKDIR?.trim() || env.CODEX_WORKDIR?.trim() || "/workspace-base";
   const codexWorkspacesDir = env.CODEX_WORKSPACES_DIR?.trim() || "/workspaces";
   const stateDbPath = env.STATE_DB_PATH?.trim() || "./data/discodex.sqlite";
@@ -51,6 +57,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     allowedChannelIds: parseCsvSet(env.ALLOWED_CHANNEL_IDS),
     discordHistoryLimit,
     discordHistoryMaxChars,
+    discordRequestMessageContentIntent,
     codexBaseWorkdir,
     codexWorkspacesDir,
     codexHome: optional(env.CODEX_HOME),
@@ -120,4 +127,18 @@ function parseNonNegativeInt(value: string | undefined, fallback: number, name: 
     throw new Error(`${name} must be a non-negative integer`);
   }
   return parsed;
+}
+
+function parseBoolean(value: string | undefined, fallback: boolean, name: string): boolean {
+  if (!value?.trim()) {
+    return fallback;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true" || normalized === "1" || normalized === "yes") {
+    return true;
+  }
+  if (normalized === "false" || normalized === "0" || normalized === "no") {
+    return false;
+  }
+  throw new Error(`${name} must be true or false`);
 }

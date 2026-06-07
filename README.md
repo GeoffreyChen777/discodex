@@ -26,7 +26,7 @@ Minimal Discord-to-Codex bridge. Mention the bot in an allowed Discord channel a
 
 1. Create a Discord application and bot in the Discord Developer Portal.
 2. Invite it to your server with permissions: View Channel, Send Messages, Read Message History.
-3. If `DISCORD_HISTORY_LIMIT` is greater than `0`, enable Message Content Intent in the Bot settings page. Direct mention handling can run without it, but readable channel history needs it.
+3. Direct mention handling can run without privileged intents. If fetched history contents are empty, enable Message Content Intent in the Bot settings page and set `DISCORD_REQUEST_MESSAGE_CONTENT_INTENT=true`.
 
 ## Configure
 
@@ -41,6 +41,7 @@ Set:
 - `ALLOWED_CHANNEL_IDS` if you want to restrict channels
 - `DISCORD_HISTORY_LIMIT` to include recent channel messages before each Codex prompt, or `0` to disable
 - `DISCORD_HISTORY_MAX_CHARS` to cap how much history text is sent to Codex
+- `DISCORD_REQUEST_MESSAGE_CONTENT_INTENT=true` only after enabling Message Content Intent in the Discord Developer Portal
 - Optional `CODEX_WORKSPACE_HOST_PATH` to a host git repo path mounted at `/workspace-base`
 - If `CODEX_WORKSPACE_HOST_PATH` is unset, Compose uses an internal Docker volume and the bot initializes it as an empty git repo on first use
 
@@ -73,7 +74,7 @@ Use Discord:
 
 Set `DISCORD_HISTORY_LIMIT` to a small number such as `20` to include recent messages from the same Discord channel before the current mention. The bot fetches messages before the triggering message, sorts them oldest to newest, redacts common token shapes, and adds them to the Codex prompt. `DISCORD_HISTORY_MAX_CHARS` caps the total history text so a busy channel does not produce oversized prompts.
 
-When history is enabled, the bot requests Discord's Message Content gateway intent. You must also enable Message Content Intent in the Discord Developer Portal for the application.
+The bot fetches history through Discord's channel messages API. If Discord returns blank content for ordinary messages, enable Message Content Intent in the Discord Developer Portal and set `DISCORD_REQUEST_MESSAGE_CONTENT_INTENT=true`. Do not set that env var before enabling the portal toggle, because Discord will reject the gateway connection with `Used disallowed intents`.
 
 ## Codex execution policy
 
